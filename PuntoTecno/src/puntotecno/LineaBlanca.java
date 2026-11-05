@@ -7,7 +7,7 @@ package puntotecno;
 public class LineaBlanca extends Producto {
 
     // Constante: el período de esta categoría no cambia
-    private static final int PERIODO_DIAS = 365;
+    public static final int PERIODO_DIAS = 365;
 
     // Constructor: delega en el de la clase padre con super(...)
     public LineaBlanca(int idProducto, String nombre, double precio) {
@@ -16,6 +16,9 @@ public class LineaBlanca extends Producto {
 
     @Override
     public int getPeriodoGarantiaDias() { return PERIODO_DIAS; }
+
+    @Override
+    public int getIdCategoria() { return 1; }   // id en la tabla categorias
 
     @Override
     public String getCategoria() { return "Línea blanca"; }

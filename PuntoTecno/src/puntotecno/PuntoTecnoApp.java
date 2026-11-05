@@ -1,12 +1,14 @@
 package puntotecno;
 
+import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import puntotecno.controlador.ControladorPuntoTecno;
+import puntotecno.persistencia.ConexionBD;
+import puntotecno.persistencia.ModeloMySQL;
+import puntotecno.persistencia.PersistenciaException;
 
-/**
- * Clase de arranque del sistema (contiene el método main).
- * Crea el sistema con sus datos precargados y abre el menú principal.
- */
 public class PuntoTecnoApp {
 
     public static void main(String[] args) {
@@ -19,8 +21,25 @@ public class PuntoTecnoApp {
 
         // Las ventanas Swing se crean en el hilo de eventos
         SwingUtilities.invokeLater(() -> {
-            PuntoTecno sistema = new PuntoTecno("PuntoTecno");
-            new MenuPrincipal(sistema).setVisible(true);
+            try {
+                ConexionBD conexion = ConexionBD.desdeArchivo(ConexionBD.ARCHIVO_POR_DEFECTO);
+                PuntoTecno sistema = new PuntoTecno("PuntoTecno");
+                ControladorPuntoTecno controlador = new ControladorPuntoTecno(sistema, new ModeloMySQL(conexion));
+
+                List<String> advertencias = controlador.iniciar();   // lee MySQL y carga las listas
+                System.out.println("[PuntoTecno] Datos cargados desde MySQL. Garantías con estado corregido: "
+                        + controlador.getGarantiasActualizadas());
+
+                if (!advertencias.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, String.join("\n", advertencias),
+                            "Períodos de garantía distintos entre la base y el programa", JOptionPane.WARNING_MESSAGE);
+                }
+                new MenuPrincipal(controlador).setVisible(true);
+
+            } catch (PersistenciaException e) {
+                Mensajes.errorBaseDeDatos(null, e);
+                System.exit(1);
+            }
         });
     }
 }

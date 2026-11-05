@@ -1,5 +1,7 @@
 package puntotecno;
 
+import puntotecno.controlador.ControladorPuntoTecno;
+import puntotecno.persistencia.PersistenciaException;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -16,14 +18,14 @@ import javax.swing.JTextField;
 /** Pantalla "Modificar cliente" (RFS10). */
 public class VentanaModificarCliente extends JDialog {
 
-    private PuntoTecno sistema;
+    private ControladorPuntoTecno controlador;
     private JComboBox<Cliente> comboCliente;
     private JTextField txtNombre;
     private JTextField txtContacto;
 
-    public VentanaModificarCliente(Window owner, PuntoTecno sistema) {
+    public VentanaModificarCliente(Window owner, ControladorPuntoTecno controlador) {
         super(owner, "PuntoTecno — Modificar cliente", ModalityType.APPLICATION_MODAL);
-        this.sistema = sistema;
+        this.controlador = controlador;
         construirPantalla();
         cargarCombo(0);
         pack();
@@ -61,7 +63,7 @@ public class VentanaModificarCliente extends JDialog {
 
     /** Llena el combo con los clientes actuales y deja seleccionado el índice indicado. */
     private void cargarCombo(int indiceASeleccionar) {
-        comboCliente.setModel(new DefaultComboBoxModel<>(sistema.getClientes().toArray(new Cliente[0])));
+        comboCliente.setModel(new DefaultComboBoxModel<>(controlador.getClientes().toArray(new Cliente[0])));
         if (comboCliente.getItemCount() > 0) {
             comboCliente.setSelectedIndex(indiceASeleccionar);
         }
@@ -85,12 +87,14 @@ public class VentanaModificarCliente extends JDialog {
         }
         try {
             int indice = comboCliente.getSelectedIndex();
-            sistema.modificarCliente(elegido.getIdCliente(), txtNombre.getText(), txtContacto.getText());
+            controlador.modificarCliente(elegido.getIdCliente(), txtNombre.getText(), txtContacto.getText());
             cargarCombo(indice);   // refresca el combo para que muestre el nombre actualizado
             JOptionPane.showMessageDialog(this, "Datos del cliente actualizados.",
                     "Modificar cliente", JOptionPane.INFORMATION_MESSAGE);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.WARNING_MESSAGE);
+        } catch (PersistenciaException ex) {
+            Mensajes.errorBaseDeDatos(this, ex);
         }
     }
 }

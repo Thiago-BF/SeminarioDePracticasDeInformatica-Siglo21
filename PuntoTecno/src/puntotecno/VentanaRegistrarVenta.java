@@ -1,5 +1,7 @@
 package puntotecno;
 
+import puntotecno.controlador.ControladorPuntoTecno;
+import puntotecno.persistencia.PersistenciaException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -26,16 +28,16 @@ import javax.swing.event.DocumentListener;
  */
 public class VentanaRegistrarVenta extends JDialog {
 
-    private PuntoTecno sistema;
+    private ControladorPuntoTecno controlador;
     private JComboBox<Cliente> comboCliente;
     private JComboBox<Vendedor> comboVendedor;
     private JComboBox<Producto> comboProducto;
     private JTextField txtFecha;
     private JLabel lblGarantia;
 
-    public VentanaRegistrarVenta(Window owner, PuntoTecno sistema) {
+    public VentanaRegistrarVenta(Window owner, ControladorPuntoTecno controlador) {
         super(owner, "PuntoTecno — Registrar venta", ModalityType.APPLICATION_MODAL);
-        this.sistema = sistema;
+        this.controlador = controlador;
         construirPantalla();
         cargarCombos();
         actualizarGarantia();
@@ -108,15 +110,15 @@ public class VentanaRegistrarVenta extends JDialog {
 
     /** Carga los combos con los datos actuales del sistema. */
     private void cargarCombos() {
-        comboCliente.setModel(new DefaultComboBoxModel<>(sistema.getClientes().toArray(new Cliente[0])));
-        comboVendedor.setModel(new DefaultComboBoxModel<>(sistema.getVendedores().toArray(new Vendedor[0])));
-        comboProducto.setModel(new DefaultComboBoxModel<>(sistema.getProductos().toArray(new Producto[0])));
+        comboCliente.setModel(new DefaultComboBoxModel<>(controlador.getClientes().toArray(new Cliente[0])));
+        comboVendedor.setModel(new DefaultComboBoxModel<>(controlador.getVendedores().toArray(new Vendedor[0])));
+        comboProducto.setModel(new DefaultComboBoxModel<>(controlador.getProductos().toArray(new Producto[0])));
     }
 
     // ---------- Flujo alternativo: dar de alta cliente/producto sin salir de la pantalla ----------
     private void abrirNuevoCliente() {
         int antes = comboCliente.getItemCount();
-        new VentanaAltaCliente(this, sistema).setVisible(true);   // modal: espera a que se cierre
+        new VentanaAltaCliente(this, controlador).setVisible(true);   // modal: espera a que se cierre
         cargarCombos();
         if (comboCliente.getItemCount() > antes) {
             comboCliente.setSelectedIndex(comboCliente.getItemCount() - 1);   // selecciona el nuevo
@@ -125,7 +127,7 @@ public class VentanaRegistrarVenta extends JDialog {
 
     private void abrirNuevoProducto() {
         int antes = comboProducto.getItemCount();
-        new VentanaAltaProducto(this, sistema).setVisible(true);
+        new VentanaAltaProducto(this, controlador).setVisible(true);
         cargarCombos();
         if (comboProducto.getItemCount() > antes) {
             comboProducto.setSelectedIndex(comboProducto.getItemCount() - 1);
@@ -152,7 +154,7 @@ public class VentanaRegistrarVenta extends JDialog {
     private void registrar() {
         try {
             LocalDate fecha = Formato.parseFecha(txtFecha.getText());   // puede lanzar DateTimeParseException
-            Venta venta = sistema.registrarVenta(
+            Venta venta = controlador.registrarVenta(
                     (Cliente) comboCliente.getSelectedItem(),
                     (Vendedor) comboVendedor.getSelectedItem(),
                     (Producto) comboProducto.getSelectedItem(),
@@ -171,6 +173,8 @@ public class VentanaRegistrarVenta extends JDialog {
                     "Fecha inválida", JOptionPane.WARNING_MESSAGE);
         } catch (GarantiaException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo registrar la venta", JOptionPane.ERROR_MESSAGE);
+        } catch (PersistenciaException ex) {
+            Mensajes.errorBaseDeDatos(this, ex);
         }
     }
 }

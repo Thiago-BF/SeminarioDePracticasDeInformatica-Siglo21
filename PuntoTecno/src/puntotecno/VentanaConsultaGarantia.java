@@ -1,5 +1,6 @@
 package puntotecno;
 
+import puntotecno.controlador.ControladorPuntoTecno;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -22,16 +23,16 @@ public class VentanaConsultaGarantia extends JDialog {
 
     private static final String CUALQUIERA = "(cualquiera)";
 
-    private PuntoTecno sistema;
+    private ControladorPuntoTecno controlador;
     private JTextField txtNumero;
     private JComboBox<Object> comboCliente;    // Object: contiene el texto "(cualquiera)" o un Cliente
     private JComboBox<Object> comboProducto;
     private JLabel lblMensaje;
     private PanelTablaVentas tabla;
 
-    public VentanaConsultaGarantia(Window owner, PuntoTecno sistema) {
+    public VentanaConsultaGarantia(Window owner, ControladorPuntoTecno controlador) {
         super(owner, "PuntoTecno — Consultar estado de garantía", ModalityType.APPLICATION_MODAL);
-        this.sistema = sistema;
+        this.controlador = controlador;
         construirPantalla();
         pack();
         setLocationRelativeTo(owner);
@@ -43,14 +44,14 @@ public class VentanaConsultaGarantia extends JDialog {
 
         DefaultComboBoxModel<Object> modeloClientes = new DefaultComboBoxModel<>();
         modeloClientes.addElement(CUALQUIERA);
-        for (Cliente c : sistema.getClientes()) {
+        for (Cliente c : controlador.getClientes()) {
             modeloClientes.addElement(c);
         }
         comboCliente = new JComboBox<>(modeloClientes);
 
         DefaultComboBoxModel<Object> modeloProductos = new DefaultComboBoxModel<>();
         modeloProductos.addElement(CUALQUIERA);
-        for (Producto p : sistema.getProductos()) {
+        for (Producto p : controlador.getProductos()) {
             modeloProductos.addElement(p);
         }
         comboProducto = new JComboBox<>(modeloProductos);
@@ -102,7 +103,7 @@ public class VentanaConsultaGarantia extends JDialog {
             // Búsqueda por número de venta (binaria)
             try {
                 int numero = Integer.parseInt(textoNumero);   // puede lanzar NumberFormatException
-                Venta v = sistema.buscarVenta(numero);
+                Venta v = controlador.buscarVenta(numero);
                 if (v != null) {
                     encontradas.add(v);
                 }
@@ -124,7 +125,7 @@ public class VentanaConsultaGarantia extends JDialog {
                 return;
             }
             if (hayCliente) {
-                encontradas = sistema.ventasDeCliente((Cliente) cli);
+                encontradas = controlador.ventasDeCliente((Cliente) cli);
                 if (hayProducto) {
                     // Ambos criterios: se queda solo con las ventas de ese producto
                     List<Venta> filtradas = new ArrayList<>();
@@ -136,7 +137,7 @@ public class VentanaConsultaGarantia extends JDialog {
                     encontradas = filtradas;
                 }
             } else {
-                encontradas = sistema.ventasDeProducto((Producto) prod);
+                encontradas = controlador.ventasDeProducto((Producto) prod);
             }
         }
 

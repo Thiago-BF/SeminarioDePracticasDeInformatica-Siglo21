@@ -1,5 +1,6 @@
 package puntotecno;
 
+import puntotecno.controlador.ControladorPuntoTecno;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -20,12 +21,12 @@ import javax.swing.SwingConstants;
  */
 public class MenuPrincipal extends JFrame {
 
-    private PuntoTecno sistema;
+    private ControladorPuntoTecno controlador;
 
-    // Constructor: recibe el sistema (con sus datos) que van a compartir todas las pantallas
-    public MenuPrincipal(PuntoTecno sistema) {
+    // Constructor: recibe el controlador que van a compartir todas las pantallas
+    public MenuPrincipal(ControladorPuntoTecno controlador) {
         super("PuntoTecno — Sistema de Gestión de Ventas y Garantías");
-        this.sistema = sistema;
+        this.controlador = controlador;
         construirPantalla();
         setSize(430, 460);
         setLocationRelativeTo(null);   // centrada en la pantalla
@@ -42,7 +43,7 @@ public class MenuPrincipal extends JFrame {
 
     // ---------- Armado del menú ----------
     private void construirPantalla() {
-        JLabel titulo = new JLabel("MENÚ PRINCIPAL — " + sistema.getNombre(), SwingConstants.CENTER);
+        JLabel titulo = new JLabel("MENÚ PRINCIPAL — " + controlador.getNombre(), SwingConstants.CENTER);
         titulo.setFont(titulo.getFont().deriveFont(Font.BOLD, 18f));
         titulo.setBorder(BorderFactory.createEmptyBorder(15, 10, 5, 10));
 
@@ -54,12 +55,12 @@ public class MenuPrincipal extends JFrame {
         JButton btnListar = crearBoton("6. Listar ventas");
         JButton btnSalir = crearBoton("7. Salir");
 
-        btnVenta.addActionListener(e -> new VentanaRegistrarVenta(this, sistema).setVisible(true));
-        btnProducto.addActionListener(e -> new VentanaAltaProducto(this, sistema).setVisible(true));
-        btnCliente.addActionListener(e -> new VentanaAltaCliente(this, sistema).setVisible(true));
-        btnModificar.addActionListener(e -> new VentanaModificarCliente(this, sistema).setVisible(true));
-        btnGarantia.addActionListener(e -> new VentanaConsultaGarantia(this, sistema).setVisible(true));
-        btnListar.addActionListener(e -> new VentanaListarVentas(this, sistema).setVisible(true));
+        btnVenta.addActionListener(e -> new VentanaRegistrarVenta(this, controlador).setVisible(true));
+        btnProducto.addActionListener(e -> new VentanaAltaProducto(this, controlador).setVisible(true));
+        btnCliente.addActionListener(e -> new VentanaAltaCliente(this, controlador).setVisible(true));
+        btnModificar.addActionListener(e -> new VentanaModificarCliente(this, controlador).setVisible(true));
+        btnGarantia.addActionListener(e -> new VentanaConsultaGarantia(this, controlador).setVisible(true));
+        btnListar.addActionListener(e -> new VentanaListarVentas(this, controlador).setVisible(true));
         btnSalir.addActionListener(e -> salir());
 
         JPanel botones = new JPanel(new GridLayout(0, 1, 0, 10));

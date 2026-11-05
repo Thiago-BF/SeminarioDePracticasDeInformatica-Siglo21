@@ -1,5 +1,7 @@
 package puntotecno;
 
+import puntotecno.controlador.ControladorPuntoTecno;
+import puntotecno.persistencia.PersistenciaException;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -12,17 +14,17 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-/** Pantalla "Dar de alta producto" (RFS04). La categoría elegida decide qué subclase se crea. */
+/** Pantalla "Dar de alta producto" (RFS04). La categoría elegida decide qué subclase se crea; se guarda en MySQL. */
 public class VentanaAltaProducto extends JDialog {
 
-    private PuntoTecno sistema;
+    private ControladorPuntoTecno controlador;
     private JTextField txtNombre;
     private JTextField txtPrecio;
     private JComboBox<String> comboCategoria;
 
-    public VentanaAltaProducto(Window owner, PuntoTecno sistema) {
+    public VentanaAltaProducto(Window owner, ControladorPuntoTecno controlador) {
         super(owner, "PuntoTecno — Alta de producto", ModalityType.APPLICATION_MODAL);
-        this.sistema = sistema;
+        this.controlador = controlador;
         construirPantalla();
         pack();
         setLocationRelativeTo(owner);
@@ -64,7 +66,7 @@ public class VentanaAltaProducto extends JDialog {
         try {
             // Texto -> número. Si no es numérico lanza NumberFormatException
             double precio = Double.parseDouble(txtPrecio.getText().trim().replace(',', '.'));
-            int id = sistema.siguienteIdProducto();
+            int id = controlador.siguienteIdProducto();
             String nombre = txtNombre.getText();
 
             // POLIMORFISMO: se crea la subclase según la categoría, pero se guarda como Producto
@@ -74,7 +76,7 @@ public class VentanaAltaProducto extends JDialog {
                 case 1:  nuevo = new PequenoElectrodomestico(id, nombre, precio); break;
                 default: nuevo = new TecnologiaHogar(id, nombre, precio); break;
             }
-            sistema.agregarProducto(nuevo);
+            controlador.agregarProducto(nuevo);
 
             JOptionPane.showMessageDialog(this,
                     "Producto registrado correctamente.\n" + nuevo + "\nGarantía: " + nuevo.getPeriodoGarantiaDias() + " días",
@@ -87,6 +89,8 @@ public class VentanaAltaProducto extends JDialog {
         } catch (IllegalArgumentException ex) {
             // Nombre vacío o precio negativo (validados dentro de Producto)
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.WARNING_MESSAGE);
+        } catch (PersistenciaException ex) {
+            Mensajes.errorBaseDeDatos(this, ex);
         }
     }
 }

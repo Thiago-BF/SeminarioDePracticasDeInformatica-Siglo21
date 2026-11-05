@@ -35,6 +35,9 @@ public abstract class Producto {
     /** Devuelve el nombre de la categoría (ej: "Línea blanca"). */
     public abstract String getCategoria();
 
+    /** Devuelve el id de la categoría en la tabla categorias de MySQL (1, 2 o 3). TP4: persistencia. */
+    public abstract int getIdCategoria();
+
     // ---------- Getters (solo se expone lo relevante) ----------
     public int getIdProducto() { return idProducto; }
     public String getNombre()  { return nombre; }

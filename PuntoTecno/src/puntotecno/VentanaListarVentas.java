@@ -1,5 +1,6 @@
 package puntotecno;
 
+import puntotecno.controlador.ControladorPuntoTecno;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -21,16 +22,16 @@ import javax.swing.JTextField;
  */
 public class VentanaListarVentas extends JDialog {
 
-    private PuntoTecno sistema;
+    private ControladorPuntoTecno controlador;
     private JTextField txtDesde;
     private JTextField txtHasta;
     private JComboBox<String> comboOrden;
     private JLabel lblCantidad;
     private PanelTablaVentas tabla;
 
-    public VentanaListarVentas(Window owner, PuntoTecno sistema) {
+    public VentanaListarVentas(Window owner, ControladorPuntoTecno controlador) {
         super(owner, "PuntoTecno — Listado de ventas", ModalityType.APPLICATION_MODAL);
-        this.sistema = sistema;
+        this.controlador = controlador;
         construirPantalla();
         filtrar();   // al abrir, muestra todas las ventas
         pack();
@@ -98,9 +99,9 @@ public class VentanaListarVentas extends JDialog {
             LocalDate hasta = txtHasta.getText().trim().isEmpty()
                     ? LocalDate.of(2999, 12, 31) : Formato.parseFecha(txtHasta.getText());
 
-            List<Venta> filtradas = sistema.ventasEntreFechas(desde, hasta);   // puede lanzar IllegalArgumentException
+            List<Venta> filtradas = controlador.ventasEntreFechas(desde, hasta);   // puede lanzar IllegalArgumentException
             boolean ascendente = comboOrden.getSelectedIndex() == 1;
-            tabla.mostrar(sistema.ordenarPorFecha(filtradas, ascendente));
+            tabla.mostrar(controlador.ordenarPorFecha(filtradas, ascendente));
             lblCantidad.setText("Mostrando " + tabla.cantidad() + " registros");
 
         } catch (DateTimeParseException ex) {

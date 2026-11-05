@@ -7,8 +7,12 @@ import java.util.List;
 /**
  * Clase gestora del sistema (equivalente a CentralEolica del ejemplo ECOviento).
  * Guarda en memoria, en ArrayList, los clientes, vendedores, productos y ventas,
- * y ofrece las operaciones que usará el menú: altas, modificación, registro de
- * ventas, búsqueda y listados ordenados.
+ * y ofrece las operaciones que usará el menú: altas, modificación, búsqueda y
+ * listados ordenados.
+ *
+ * TP4: es la parte del MODELO que vive en memoria. Los datos NO se escriben acá a mano:
+ * el ControladorPuntoTecno los carga desde MySQL al iniciar y, cada vez que se guarda
+ * algo en la base, lo refleja en estas listas.
  *
  * Las listas son PRIVADAS (encapsulamiento): desde afuera solo se accede por métodos.
  */
@@ -19,93 +23,45 @@ public class PuntoTecno {
     private ArrayList<Cliente> clientes;
     private ArrayList<Vendedor> vendedores;
     private ArrayList<Producto> productos;
-    private ArrayList<Venta> ventas;   // siempre ordenada por número de venta (ver registrarVenta)
+    private ArrayList<Venta> ventas;   // siempre ordenada por número de venta (ver agregarVenta)
 
     // ===================== CONSTRUCTOR =====================
-    // Inicializa las listas vacías (igual que CentralEolica) y carga los datos de prueba
+    // Inicializa las listas vacías (igual que CentralEolica). Los datos llegan desde MySQL
+    // mediante cargarDatos(), que invoca el controlador.
     public PuntoTecno(String nombre) {
         this.nombre = nombre;
         this.clientes = new ArrayList<>();
         this.vendedores = new ArrayList<>();
         this.productos = new ArrayList<>();
         this.ventas = new ArrayList<>();
-        cargarDatosIniciales();
     }
 
-    // ===================== DATOS PRECARGADOS =====================
+    // ===================== CARGA DE DATOS (TP4) =====================
     /**
-     * Carga los mismos datos que el script puntotecno.sql del TP2.
-     * Reemplaza la carga manual: en el TP4 esta información se leerá desde MySQL con JDBC.
-     * Las garantías NO se cargan a mano: cada Venta calcula la suya.
+     * Reemplaza el contenido de las listas por los datos leídos de MySQL.
+     * Reemplaza a cargarDatosIniciales() del TP3, que escribía los datos de prueba en el código:
+     * ahora esos mismos datos están en sql/puntotecno_tp4.sql.
+     * Las ventas deben llegar ordenadas por número (requisito de la búsqueda binaria).
      */
-    private void cargarDatosIniciales() {
-        // Clientes
-        clientes.add(new Cliente(1, "Juan Perez", "3564-111222"));
-        clientes.add(new Cliente(2, "Maria Gomez", "3564-222333"));
-        clientes.add(new Cliente(3, "Carlos Lopez", "3564-333444"));
-        clientes.add(new Cliente(4, "Ana Rodriguez", "3564-444555"));
-
-        // Vendedores
-        vendedores.add(new Vendedor(101, "Ana Martinez"));
-        vendedores.add(new Vendedor(104, "Roberto Fernandez"));
-
-        // Productos (la subclase determina la categoría y la garantía)
-        productos.add(new LineaBlanca(1, "Heladera XYZ", 850000.00));
-        productos.add(new LineaBlanca(2, "Lavarropas Ultra", 620000.00));
-        productos.add(new PequenoElectrodomestico(3, "Microondas Quick", 180000.00));
-        productos.add(new TecnologiaHogar(4, "Auriculares BT", 45000.00));
-        productos.add(new TecnologiaHogar(5, "Notebook Pro 15", 1200000.00));
-        productos.add(new TecnologiaHogar(6, "Smart TV 55 4K", 950000.00));
-
-        // Ventas (número, fecha, cliente, vendedor, producto)
-        try {
-            registrarVenta(clientes.get(0), vendedores.get(0), productos.get(0), LocalDate.of(2026, 9, 22));
-            registrarVenta(clientes.get(1), vendedores.get(1), productos.get(4), LocalDate.of(2026, 8, 15));
-            registrarVenta(clientes.get(2), vendedores.get(0), productos.get(5), LocalDate.of(2025, 5, 10));
-            registrarVenta(clientes.get(3), vendedores.get(1), productos.get(2), LocalDate.of(2026, 2, 1));
-            registrarVenta(clientes.get(0), vendedores.get(0), productos.get(3), LocalDate.of(2024, 11, 12));
-        } catch (GarantiaException e) {
-            // No debería ocurrir con datos válidos; se informa por si se modifica la carga
-            System.err.println("Error al cargar ventas iniciales: " + e.getMessage());
-        }
-    }
-
-    // ===================== IDENTIFICADORES AUTOMÁTICOS =====================
-    // El sistema asigna el siguiente número libre: el usuario no tiene que inventar IDs.
-
-    public int siguienteIdCliente() {
-        int max = 0;
-        for (Cliente c : clientes) {
-            if (c.getIdCliente() > max) max = c.getIdCliente();
-        }
-        return max + 1;
-    }
-
-    public int siguienteIdProducto() {
-        int max = 0;
-        for (Producto p : productos) {
-            if (p.getIdProducto() > max) max = p.getIdProducto();
-        }
-        return max + 1;
-    }
-
-    // Las ventas se agregan siempre al final con número creciente, por lo que
-    // la lista queda ordenada por número (requisito de la búsqueda binaria).
-    private int siguienteNumeroVenta() {
-        if (ventas.isEmpty()) return 1;
-        return ventas.get(ventas.size() - 1).getNumero() + 1;
+    public void cargarDatos(List<Cliente> clientes, List<Vendedor> vendedores,
+                            List<Producto> productos, List<Venta> ventas) {
+        this.clientes = new ArrayList<>(clientes);
+        this.vendedores = new ArrayList<>(vendedores);
+        this.productos = new ArrayList<>(productos);
+        this.ventas = new ArrayList<>(ventas);
     }
 
     // ===================== ALTAS Y MODIFICACIÓN =====================
 
-    /** Alta de cliente (RFS05). El id se asigna automáticamente. */
-    public Cliente agregarCliente(String nombre, String contacto) {
-        Cliente nuevo = new Cliente(siguienteIdCliente(), nombre, contacto); // valida internamente
-        clientes.add(nuevo);
-        return nuevo;
+    /** Incorpora a la lista un cliente que ya fue guardado en MySQL (RFS05). */
+    public void agregarCliente(Cliente cliente) {
+        if (cliente == null) {
+            throw new IllegalArgumentException("El cliente no puede ser nulo.");
+        }
+        clientes.add(cliente);
     }
 
-    /** Alta de producto (RFS04). Recibe el objeto ya creado (de la subclase que corresponda). */
+    /** Incorpora a la lista un producto que ya fue guardado en MySQL (RFS04). */
     public void agregarProducto(Producto producto) {
         if (producto == null) {
             throw new IllegalArgumentException("El producto no puede ser nulo.");
@@ -113,7 +69,7 @@ public class PuntoTecno {
         productos.add(producto);
     }
 
-    /** Modificación de datos de un cliente existente (RFS10). */
+    /** Modificación de datos de un cliente existente (RFS10), ya actualizado en MySQL. */
     public void modificarCliente(int idCliente, String nombre, String contacto) {
         Cliente c = buscarClientePorId(idCliente);
         if (c == null) {
@@ -122,12 +78,18 @@ public class PuntoTecno {
         c.actualizarDatos(nombre, contacto);
     }
 
-    /** Registra una venta (RFS02). La garantía se calcula sola dentro de Venta (RFS03). */
-    public Venta registrarVenta(Cliente cliente, Vendedor vendedor, Producto producto, LocalDate fecha)
-            throws GarantiaException {
-        Venta nueva = new Venta(siguienteNumeroVenta(), fecha, cliente, vendedor, producto);
-        ventas.add(nueva);
-        return nueva;
+    /**
+     * Incorpora a la lista una venta que ya fue guardada en MySQL (RFS02).
+     * Se exige número creciente para que la lista siga ordenada y la búsqueda binaria funcione.
+     */
+    public void agregarVenta(Venta venta) {
+        if (venta == null) {
+            throw new IllegalArgumentException("La venta no puede ser nula.");
+        }
+        if (!ventas.isEmpty() && venta.getNumero() <= ventas.get(ventas.size() - 1).getNumero()) {
+            throw new IllegalArgumentException("El número de venta debe ser mayor al de la última venta cargada.");
+        }
+        ventas.add(venta);
     }
 
     // ===================== BÚSQUEDAS =====================

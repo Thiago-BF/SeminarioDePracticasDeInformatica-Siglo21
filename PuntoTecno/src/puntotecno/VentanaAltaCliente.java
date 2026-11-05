@@ -1,5 +1,7 @@
 package puntotecno;
 
+import puntotecno.controlador.ControladorPuntoTecno;
+import puntotecno.persistencia.PersistenciaException;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -14,13 +16,13 @@ import javax.swing.JTextField;
 /** Pantalla "Dar de alta cliente" (RFS05). */
 public class VentanaAltaCliente extends JDialog {
 
-    private PuntoTecno sistema;
+    private ControladorPuntoTecno controlador;
     private JTextField txtNombre;
     private JTextField txtContacto;
 
-    public VentanaAltaCliente(Window owner, PuntoTecno sistema) {
+    public VentanaAltaCliente(Window owner, ControladorPuntoTecno controlador) {
         super(owner, "PuntoTecno — Alta de cliente", ModalityType.APPLICATION_MODAL);
-        this.sistema = sistema;
+        this.controlador = controlador;
         construirPantalla();
         pack();
         setLocationRelativeTo(owner);
@@ -54,7 +56,7 @@ public class VentanaAltaCliente extends JDialog {
     // ---------- Acción del botón Guardar ----------
     private void guardar() {
         try {
-            Cliente nuevo = sistema.agregarCliente(txtNombre.getText(), txtContacto.getText());
+            Cliente nuevo = controlador.agregarCliente(txtNombre.getText(), txtContacto.getText());
             JOptionPane.showMessageDialog(this,
                     "Cliente registrado correctamente.\nN° de cliente: " + nuevo.getIdCliente(),
                     "Alta de cliente", JOptionPane.INFORMATION_MESSAGE);
@@ -62,6 +64,9 @@ public class VentanaAltaCliente extends JDialog {
         } catch (IllegalArgumentException ex) {
             // Datos inválidos (nombre o contacto vacío): se informa sin cerrar la pantalla
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.WARNING_MESSAGE);
+        } catch (PersistenciaException ex) {
+            // Falló MySQL: se informa y la pantalla queda abierta para reintentar
+            Mensajes.errorBaseDeDatos(this, ex);
         }
     }
 }
